@@ -27,34 +27,80 @@ app.post("/api/story", async (req, res) => {
   }
 
   const systemPrompt = `
-You are a master storyteller.
+You are an award-winning novelist and screenplay writer.
 
-Respond ONLY with a valid JSON object.
-Do NOT include markdown, code blocks, or explanations.
+Your goal is to create stories that feel like professionally written novels.
 
-Format:
+IMPORTANT:
+Think through the ENTIRE story before writing.
+
+Return ONLY valid JSON.
+
+JSON FORMAT:
+
 {
-  "title": "Story title",
-  "byline": "One evocative sentence",
-  "scenes": [
+  "title":"",
+  "byline":"",
+  "scenes":[
     {
-      "scene_number": 1,
-      "scene_title": "Scene title",
-      "paragraphs": ["Paragraph 1", "Paragraph 2"]
+      "scene_number":1,
+      "scene_title":"",
+      "paragraphs":[
+        "",
+        ""
+      ]
     }
   ]
 }
 
 Rules:
-- EXACTLY ${numScenes} scenes
-- Each scene has EXACTLY 2 paragraphs
-- Output MUST be valid JSON
+
+- Create EXACTLY ${numScenes} scenes.
+- Each scene contains EXACTLY 2 long paragraphs.
+- Every scene continues directly from the previous one.
+- Every scene advances the main plot.
+- Never repeat previous information.
+- Introduce mystery early.
+- Build tension throughout.
+- Characters must remember previous events.
+- Characters must stay consistent.
+- Locations must transition naturally.
+- Every scene should include meaningful dialogue.
+- Describe emotions instead of telling them.
+- Use vivid cinematic descriptions.
+- End every scene with suspense or a cliffhanger.
+- The final scene should provide an emotional and satisfying ending.
+
+Output ONLY valid JSON.
 `;
 
   const userPrompt = `
-Write a ${genre} story set in ${setting}.
-Hero: ${hero}, who is ${trait}.
-Create exactly ${numScenes} scenes with cinematic detail.
+Write a highly engaging novel.
+
+Genre:
+${genre}
+
+Setting:
+${setting}
+
+Main Hero:
+${hero}
+
+Hero Personality:
+${trait}
+
+Requirements:
+
+- Exactly ${numScenes} scenes.
+- Exactly 2 long paragraphs in every scene.
+- Introduce the hero naturally.
+- Every scene must continue from the previous scene.
+- Every scene must reveal something new.
+- Include emotional dialogue.
+- Include mystery and conflict.
+- Build suspense.
+- End every scene with a cliffhanger.
+- End the final scene with a satisfying conclusion.
 `;
 
   try {
@@ -68,17 +114,37 @@ Create exactly ${numScenes} scenes with cinematic detail.
         "X-Title": "Mythos Story App"
       },
       body: JSON.stringify({
-        model: "meta-llama/llama-3.3-70b-instruct",
-        max_tokens: 1500,
-        temperature: 0.8,
+        model: "deepseek/deepseek-chat-v3",
+        max_tokens: 3500,
+        temperature: 1.0,
+        top_p: 0.95,
+        presence_penalty: 0.5,
+        frequency_penalty: 0.3,
+
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ]
       })
     });
+    console.log(response.status);
+    console.log(response.statusText);
 
-    let data = await response.json();
+    const text = await response.text();
+
+console.log("OpenRouter Response:");
+console.log(text);
+
+let data;
+
+try {
+    data = JSON.parse(text);
+} catch (err) {
+    return res.status(500).json({
+        error: "OpenRouter did not return valid JSON.",
+        response: text
+    });
+}
 
     // ── FALLBACK MODEL (8B) ──
     if (!data.choices) {
@@ -91,9 +157,12 @@ Create exactly ${numScenes} scenes with cinematic detail.
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: "meta-llama/llama-3-8b-instruct",
-          max_tokens: 1200,
-          temperature: 0.8,
+          model: "qwen/qwen3-32b",
+          max_tokens: 3500,
+          temperature: 1.0,
+          top_p: 0.95,
+          presence_penalty: 0.5,
+          frequency_penalty: 0.3,
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt }
@@ -101,7 +170,19 @@ Create exactly ${numScenes} scenes with cinematic detail.
         })
       });
 
-      data = await response.json();
+      const text2 = await response.text();
+
+console.log("Fallback Response:");
+console.log(text2);
+
+try {
+    data = JSON.parse(text2);
+} catch (err) {
+    return res.status(500).json({
+        error: "Fallback model returned invalid JSON.",
+        response: text2
+    });
+}
     }
 
     if (!data.choices || !data.choices[0]) {
@@ -109,7 +190,17 @@ Create exactly ${numScenes} scenes with cinematic detail.
     }
 
     let raw = data.choices[0].message.content || "";
-    raw = raw.replace(/```json|```/g, "").trim();
+    raw = raw
+  .replace(/```json/gi, "")
+  .replace(/```/g, "")
+  .trim();
+
+const start = raw.indexOf("{");
+const end = raw.lastIndexOf("}");
+
+if (start !== -1 && end !== -1) {
+  raw = raw.substring(start, end + 1);
+}
 
     let story;
     try {
