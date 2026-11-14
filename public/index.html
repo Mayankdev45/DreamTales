@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DreamTales — Story Creator</title>
+  <meta name="description" content="Choose a world, name your hero, and let AI write your story scene by scene." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Lora:ital,wght@0,400;1,400&family=DM+Sans:wght@300;400;500&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- GRAIN OVERLAY -->
+  <div class="grain"></div>
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">Dream<span class="logo-accent">Tales</span></div>
+    <div class="header-pill"><b>Created by Mayank Dev</b></div>
+  </header>
+
+  <!-- FORGE (input form) -->
+  <section class="forge" id="forgeSection">
+    <div class="forge-inner">
+      <h1 class="forge-heading">
+        Stories with<br /><em>scenes that breathe.</em>
+      </h1>
+      <p class="forge-sub">
+        Choose a world, name your hero, and begin an unforgettable journey.
+        Our AI transforms your ideas into rich, immersive stories that unfold naturally scene by scene,
+        making every adventure uniquely yours.
+      </p>
+
+      <!-- Row 1 -->
+      <div class="ctrl-grid three">
+        <div class="ctrl">
+          <label class="ctrl-label" for="genre">Genre</label>
+          <select id="genre" required>
+            <option value="" disabled selected>Select</option>
+            <option value="fantasy">Fantasy</option>
+            <option value="science fiction">Sci-Fi</option>
+            <option value="mystery">Mystery</option>
+            <option value="horror">Horror</option>
+            <option value="Indian mythology">Indian Mythology</option>
+            <option value="adventure">Adventure</option>
+            <option value="romance">Romance</option>
+            <option value="historical fiction">Historical Fiction</option>
+            <option value="thriller">Thriller</option>
+          </select>
+        </div>
+        <div class="ctrl">
+          <label class="ctrl-label" for="setting">Setting</label>
+          <select id="setting" required>
+            <option value="" disabled selected>Select</option>
+            <option value="an ancient Indian kingdom">Ancient Indian Kingdom</option>
+            <option value="a futuristic Mumbai">Futuristic Mumbai</option>
+            <option value="a haunted Rajasthani fort">Haunted Rajasthani Fort</option>
+            <option value="outer space">Outer Space</option>
+            <option value="the snow-capped Himalayas">The Himalayas</option>
+            <option value="a dense magical jungle">Magical Jungle</option>
+            <option value="a royal Mughal court">Mughal Royal Court</option>
+            <option value="a cyberpunk Delhi">Cyberpunk Delhi</option>
+            <option value="a coastal Kerala village">Kerala Village</option>
+            <option value="an underground lost city">Underground Lost City</option>
+          </select>
+        </div>
+        <div class="ctrl no-border-right">
+          <label class="ctrl-label" for="hero">Hero's name</label>
+          <input type="text" id="hero" placeholder="Arjun (default)" maxlength="30" autocomplete="off" />
+        </div>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="ctrl-grid two">
+        <div class="ctrl">
+          <label class="ctrl-label" for="trait">Hero's quality</label>
+          <select id="trait" required>
+            <option value="" disabled selected>Select</option>
+            <option value="brave and fearless">Brave &amp; Fearless</option>
+            <option value="cunning and wise">Cunning &amp; Wise</option>
+            <option value="kind and selfless">Kind &amp; Selfless</option>
+            <option value="mysterious and powerful">Mysterious &amp; Powerful</option>
+            <option value="reckless and bold">Reckless &amp; Bold</option>
+            <option value="haunted by the past">Haunted by the Past</option>
+            <option value="gifted with ancient magic">Gifted with Magic</option>
+          </select>
+        </div>
+        <div class="ctrl no-border-right">
+          <label class="ctrl-label" for="numScenes">Number of scenes</label>
+          <select id="numScenes">
+            <option value="3">3 scenes — short story</option>
+            <option value="4" selected>4 scenes — perfect tale</option>
+            <option value="5">5 scenes — epic journey</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Generate button -->
+      <button class="gen-btn" id="genBtn">
+        <span class="btn-spinner" id="btnSpinner"></span>
+        <span class="btn-text" id="btnText">Generate my story &rarr;</span>
+      </button>
+
+      <!-- Error message -->
+      <div class="error-box" id="errorBox" role="alert"></div>
+    </div>
+  </section>
+
+  <!-- LOADING BAR -->
+  <div class="loading-bar" id="loadingBar">
+    <div class="loading-fill" id="loadingFill"></div>
+  </div>
+  <div class="loading-msg" id="loadingMsg" aria-live="polite"></div>
+
+  <!-- STORY PAGE -->
+  <section class="story-page" id="storyPage">
+
+    <!-- Story header -->
+    <div class="story-header">
+      <div class="story-genre-tag" id="storyGenreTag"></div>
+      <h1 class="story-main-title" id="storyMainTitle"></h1>
+      <p class="story-byline" id="storyByline"></p>
+    </div>
+
+    <!-- Scenes are injected here -->
+    <div id="scenesContainer"></div>
+
+    <!-- Pager: one scene per page -->
+    <nav class="pager" id="pager" aria-label="Story pages">
+      <button class="pager-btn" id="prevBtn" disabled>&larr; Previous</button>
+      <span class="pager-status" id="pagerStatus" aria-live="polite"></span>
+      <button class="pager-btn primary" id="nextBtn" disabled>Next scene &rarr;</button>
+    </nav>
+
+    <!-- End card -->
+    <div class="story-end" id="storyEnd">
+      <span class="end-ornament">&#10022;</span>
+      <p class="end-caption" id="endCaption">The end of this tale — but never of stories.</p>
+      <div class="end-actions">
+        <button class="end-btn primary" id="newStoryBtn">Write a new story</button>
+        <button class="end-btn" id="copyBtn">Copy full story</button>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <span class="footer-quote">"Every scene deserves to be seen."</span>
+    <span class="footer-tag">DreamTales &middot; Story Generator</span>
+  </footer>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
